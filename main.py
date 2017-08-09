@@ -73,6 +73,7 @@ class Experiment(object):
                     last_print = time.time()
                     numer, denom = self.dataset.validate.progress()
                     print('Validating - Epoch: %s, %s/%s' % (epoch, numer, denom))
+            scheduler.step(validation_loss.data[0])
         if self.save:
             torch.save({
                 'model': self.model.state_dict(),
