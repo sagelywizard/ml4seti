@@ -74,11 +74,11 @@ class Dataset(object):
             self.directory = directory
         path = '%spublic_list_primary_v3_full_21june_2017.csv' % self.directory
         lines = open(path, 'r').readlines()[1:]
-        dataset = [line.strip().split(',', 1) for line in lines]
+        dataset = [tuple(line.strip().split(',', 1)) for line in lines]
 
         train, valid, test = split
         self.train = Subset(
-            directory,
+            self.directory,
             dataset,
             0.0,
             train,
@@ -86,7 +86,7 @@ class Dataset(object):
             pool_size=pool_size,
             cache=cache)
         self.validate = Subset(
-            directory,
+            self.directory,
             dataset,
             train,
             train+valid,
