@@ -60,6 +60,7 @@ class Experiment(object):
                     last_print = time.time()
                     numer, denom = self.dataset.train.progress()
                     print('Training - Epoch: %s, %s/%s' % (epoch, numer, denom))
+            self.dataset.train.reload()
             self.model.eval()
             for minibatch, targets in self.dataset.validate:
                 minibatch = Variable(torch.stack(minibatch), volatile=True)
@@ -73,6 +74,7 @@ class Experiment(object):
                     last_print = time.time()
                     numer, denom = self.dataset.validate.progress()
                     print('Validating - Epoch: %s, %s/%s' % (epoch, numer, denom))
+            self.dataset.validate.reload()
             scheduler.step(validation_loss.data[0])
         if self.save:
             torch.save({
