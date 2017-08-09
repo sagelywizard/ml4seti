@@ -12,7 +12,14 @@ class DenseNet(nn.Module):
         self.densenet = torchvision.models.densenet201(
             pretrained=False,
             num_classes=7
+        ).features
+        self.out = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.AvgPool2d(kernel_size=7)
         )
+        self.linear = nn.Linear(3840, 7)
 
     def forward(self, minibatch):
-        return self.densenet(self.conv(minibatch))
+        dense = self.densenet(self.conv(minibatch))
+        out = self.out(dense)
+        return self.linear(out.view(dense.size(0), -1))
