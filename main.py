@@ -20,6 +20,9 @@ import torch.optim.lr_scheduler
 from dataset import Dataset
 from model import DenseNet
 
+def tprint(msg):
+    print('%s: %s' % (int(time.time()), msg))
+
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
             log_interval=30, load=None):
@@ -46,8 +49,9 @@ class Experiment(object):
             verbose=True,
             patience=3
         )
-        last_print = 0
+        last_print = time.time()
         for epoch in range(self.epochs):
+            tprint('Starting epoch: %s' % epoch)
             self.model.train()
             self.optimizer.zero_grad()
             for minibatch, targets in self.dataset.train:
@@ -64,9 +68,11 @@ class Experiment(object):
                 if time.time() - last_print > self.log_interval:
                     last_print = time.time()
                     numer, denom = self.dataset.train.progress()
-                    print('Training - Epoch: %s, %s/%s' % (epoch, numer, denom))
+                    tprint('Training: %s, %s/%s' % (epoch, numer, denom))
+            tprint('Training complete. Beginning validation.')
             self.dataset.train.reload()
             self.model.eval()
+            last_print = time.time()
             for minibatch, targets in self.dataset.validate:
                 minibatch = Variable(torch.stack(minibatch), volatile=True)
                 targets = Variable(torch.LongTensor(targets), volatile=True)
@@ -78,7 +84,7 @@ class Experiment(object):
                 if time.time() - last_print > self.log_interval:
                     last_print = time.time()
                     numer, denom = self.dataset.validate.progress()
-                    print('Validating - Epoch: %s, %s/%s' % (epoch, numer, denom))
+                    tprint('Validating: %s, %s/%s' % (epoch, numer, denom))
             self.dataset.validate.reload()
             scheduler.step(validation_loss.data[0])
         if self.save:
@@ -88,7 +94,9 @@ class Experiment(object):
             }, 'signet.%s.pth' % int(time.time()))
 
     def test(self):
+        tprint('Beginning testing.')
         confusion_matrix = np.zeros((7, 7)).astype(np.int)
+        last_print = time.time()
         for minibatch, targets in self.dataset.test:
             minibatch = Variable(torch.stack(minibatch), volatile=True)
             targets = Variable(torch.LongTensor(targets), volatile=True)
@@ -104,6 +112,11 @@ class Experiment(object):
                 targets,
                 labels=[0, 1, 2, 3, 4, 5, 6]
             ).astype(np.int)
+            if time.time() - last_print > self.log_interval:
+                last_print = time.time()
+                numer, denom = self.dataset.test.progress()
+                tprint('Testing: %s/%s' % (numer, denom))
+        tprint('Testing complete.')
         print(confusion_matrix)
 
 def main():
