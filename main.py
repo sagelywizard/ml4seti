@@ -83,6 +83,11 @@ class Experiment(object):
     def test(self):
         confusion_matrix = np.zeros((7, 7)).astype(np.int)
         for minibatch, targets in self.dataset.test:
+            minibatch = Variable(torch.stack(minibatch), volatile=True)
+            targets = Variable(torch.LongTensor(targets), volatile=True)
+            if self.cuda:
+                minibatch = minibatch.cuda()
+                targets = targets.cuda()
             out = self.model.forward(minibatch)
             _, predicted = torch.max(out.data, 1)
             predicted = predicted.cpu().numpy()
