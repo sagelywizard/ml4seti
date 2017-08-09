@@ -12,6 +12,7 @@ import sklearn.metrics
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 import torchvision
 import torch.optim.lr_scheduler
 
@@ -19,9 +20,10 @@ from dataset import Dataset
 from model import DenseNet
 
 class Experiment(object):
-    def __init__(self, directory, epochs=1):
+    def __init__(self, directory, epochs=1, cuda=False):
         self.dataset = Dataset(directory)
         self.epochs = epochs
+        self.cuda = cuda
         self.model = DenseNet()
 
     def train(self):
@@ -36,6 +38,11 @@ class Experiment(object):
         for epoch in self.epochs:
             self.model.train()
             for minibatch, targets in self.dataset.train:
+                minibatch = Variable(torch.stack(minibatch))
+                targets = Variable(torch.LongTensor(targets))
+                if self.cuda:
+                    minibatch = minibatch.cuda()
+                    targets = targets.cuda()
                 out = self.model.forward(minibatch)
                 loss = loss_fun(out, targets)
                 loss.backward()
@@ -43,6 +50,11 @@ class Experiment(object):
                 optimizer.zero_grad()
             self.model.eval()
             for minibatch, targets in self.dataset.validate:
+                minibatch = Variable(torch.stack(minibatch), volatile=True)
+                targets = Variable(torch.LongTensor(targets), volatile=True)
+                if self.cuda:
+                    minibatch = minibatch.cuda()
+                    targets = targets.cuda()
                 out = self.model.forward(minibatch)
                 validation_loss = loss_fun(out, targets)
 
