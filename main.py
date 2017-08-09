@@ -21,22 +21,27 @@ from dataset import Dataset
 from model import DenseNet
 
 class Experiment(object):
-    def __init__(self, directory, epochs=1, cuda=False, save=False, log_interval=30):
+    def __init__(self, directory, epochs=1, cuda=False, save=False,
+            log_interval=30, load=None):
         self.dataset = Dataset(directory)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
         self.log_interval = log_interval
         self.model = DenseNet()
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
+        if load is not None:
+            state = torch.load(load)
+            self.model.load_state_dict(state['model'])
+            self.optimizer.load_state_dict(state['optim'])
         if cuda:
             self.model = self.model.cuda()
 
     def train(self):
         print('Training %s epochs.' % self.epochs)
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         loss_fun = nn.CrossEntropyLoss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
+            self.optimizer,
             'min',
             verbose=True,
             patience=3
@@ -44,7 +49,7 @@ class Experiment(object):
         last_print = 0
         for epoch in range(self.epochs):
             self.model.train()
-            optimizer.zero_grad()
+            self.optimizer.zero_grad()
             for minibatch, targets in self.dataset.train:
                 minibatch = Variable(torch.stack(minibatch))
                 targets = Variable(torch.LongTensor(targets))
@@ -54,8 +59,8 @@ class Experiment(object):
                 out = self.model.forward(minibatch)
                 loss = loss_fun(out, targets)
                 loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
+                self.optimizer.step()
+                self.optimizer.zero_grad()
                 if time.time() - last_print > self.log_interval:
                     last_print = time.time()
                     numer, denom = self.dataset.train.progress()
@@ -79,7 +84,7 @@ class Experiment(object):
         if self.save:
             torch.save({
                 'model': self.model.state_dict(),
-                'optim': optimizer.state_dict(),
+                'optim': self.optimizer.state_dict(),
             }, 'signet.%s.pth' % int(time.time()))
 
     def test(self):
@@ -122,13 +127,19 @@ def main():
         type=int,
         default=30,
         help='# of seconds between log line prints')
+    parser.add_argument(
+        '-m',
+        '--model',
+        default=None,
+        help='path to a pretrained model')
     args = parser.parse_args()
     experiment = Experiment(
         args.directory,
         epochs=args.epochs,
         cuda=args.cuda,
         save=args.save,
-        log_interval=args.log_interval)
+        log_interval=args.log_interval,
+        load=args.model)
     experiment.train()
 
 if __name__ == '__main__':
