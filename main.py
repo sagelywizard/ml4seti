@@ -20,10 +20,11 @@ from dataset import Dataset
 from model import DenseNet
 
 class Experiment(object):
-    def __init__(self, directory, epochs=1, cuda=False):
+    def __init__(self, directory, epochs=1, cuda=False, save=False):
         self.dataset = Dataset(directory)
         self.epochs = epochs
         self.cuda = cuda
+        self.save = save
         self.model = DenseNet()
         if cuda:
             self.model = self.model.cuda()
@@ -50,6 +51,7 @@ class Experiment(object):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+
             self.model.eval()
             for minibatch, targets in self.dataset.validate:
                 minibatch = Variable(torch.stack(minibatch), volatile=True)
@@ -59,6 +61,11 @@ class Experiment(object):
                     targets = targets.cuda()
                 out = self.model.forward(minibatch)
                 validation_loss = loss_fun(out, targets)
+        if self.save:
+            torch.save({
+                'model': self.model.state_dict(),
+                'optim': optimizer.state_dict(),
+            }, 'signet.%s.pth' % int(time.time()))
 
     def test(self):
         confusion_matrix = np.zeros((7, 7)).astype(np.int)
@@ -84,9 +91,13 @@ def main():
         default=1,
         help='Number of epochs to train')
     parser.add_argument('-c', '--cuda', action='store_true', default=False)
+    parser.add_argument('-s', '--save', action='store_true', default=False)
     args = parser.parse_args()
-
-    experiment = Experiment(args.directory, epochs=args.epochs, cuda=args.cuda)
+    experiment = Experiment(
+        args.directory,
+        epochs=args.epochs,
+        cuda=args.cuda,
+        save=args.save)
     experiment.train()
 
 if __name__ == '__main__':
