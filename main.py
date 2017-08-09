@@ -111,13 +111,24 @@ def main():
         default=1,
         help='Number of epochs to train')
     parser.add_argument('-c', '--cuda', action='store_true', default=False)
-    parser.add_argument('-s', '--save', action='store_true', default=False)
+    parser.add_argument(
+        '-s',
+        '--save',
+        action='store_true',
+        default=False, help='Will cause model to be saved at end of training')
+    parser.add_argument(
+        '-l',
+        '--log-interval',
+        type=int,
+        default=30,
+        help='# of seconds between log line prints')
     args = parser.parse_args()
     experiment = Experiment(
         args.directory,
         epochs=args.epochs,
         cuda=args.cuda,
-        save=args.save)
+        save=args.save,
+        log_interval=args.log_interval)
     experiment.train()
 
 if __name__ == '__main__':
