@@ -16,6 +16,19 @@ LABELS = [
 
 LABEL_TO_ID = {label: label_i for label_i, label in enumerate(LABELS)}
 
+def parse_dat(directory, cache, guid, target):
+    if os.path.isfile('%s%s.pth' % (directory, guid)):
+        tensor = torch.load('%s%s.pth' % (directory, guid))
+        return tensor, LABEL_TO_ID[target]
+    else:
+        raw_file = open('%s%s.dat' % (directory, guid), 'rb')
+        aca = ibmseti.compamp.SimCompamp(raw_file.read())
+        spectrogram = aca.get_spectrogram()
+        tensor = torch.from_numpy(spectrogram).float().view(1, 384, 512)
+        if cache:
+            torch.save(tensor, '%s%s.pth' % (directory, guid))
+        return tensor, LABEL_TO_ID[target]
+
 class Subset(object):
     def __init__(self, directory, dataset, start, end, pool_size=8, cache=False,
             minibatch_size=10):
@@ -29,20 +42,6 @@ class Subset(object):
         self.subset = dataset[start:end]
 
         self.iter = iter(self.subset)
-
-    def _read(self, guid_and_target):
-        guid, target = guid_and_target
-        if os.path.isfile('%s%s.pth' % (self.directory, guid)):
-            tensor = torch.load('%s%s.pth' % (self.directory, guid))
-            return tensor, LABEL_TO_ID[target]
-        else:
-            raw_file = open('%s%s.dat' % (self.directory, guid), 'rb')
-            aca = ibmseti.compamp.SimCompamp(raw_file.read())
-            spectrogram = aca.get_spectrogram()
-            tensor = torch.from_numpy(spectrogram).float().view(1, 384, 512)
-            if self.cache:
-                torch.save(tensor, '%s%s.pth' % (self.directory, guid))
-            return tensor, LABEL_TO_ID[target]
 
     def reload(self):
         self.iter = iter(self.subset)
@@ -58,7 +57,10 @@ class Subset(object):
         except StopIteration:
             if guids == []:
                 raise
-        return zip(*self.pool.map(self._read, guids))
+        ret = self.pool.starmap(
+            parse_dat,
+            [(self.directory, self.cache, guid, target) for guid, target in guids])
+        return zip(*ret)
 
 class Dataset(object):
     """This is an object which takes a directory containing the full dataset.
