@@ -25,6 +25,8 @@ class Experiment(object):
         self.epochs = epochs
         self.cuda = cuda
         self.model = DenseNet()
+        if cuda:
+            self.model = self.model.cuda()
 
     def train(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
@@ -35,7 +37,7 @@ class Experiment(object):
             verbose=True,
             patience=3
         )
-        for epoch in self.epochs:
+        for epoch in range(self.epochs):
             self.model.train()
             for minibatch, targets in self.dataset.train:
                 minibatch = Variable(torch.stack(minibatch))
@@ -81,9 +83,10 @@ def main():
         type=int,
         default=1,
         help='Number of epochs to train')
+    parser.add_argument('-c', '--cuda', action='store_true', default=False)
     args = parser.parse_args()
 
-    experiment = Experiment(args.directory, epochs=args.epochs)
+    experiment = Experiment(args.directory, epochs=args.epochs, cuda=args.cuda)
     experiment.train()
 
 if __name__ == '__main__':
