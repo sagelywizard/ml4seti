@@ -48,6 +48,8 @@ class Subset(object):
         return self.index, self.end-self.start
 
     def reload(self):
+        """Make the subset iterable again, from the beginning"""
+        self.index = 0
         self.iter = iter(self.subset)
 
     def __iter__(self):
