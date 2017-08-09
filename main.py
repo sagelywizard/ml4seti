@@ -62,8 +62,13 @@ class Experiment(object):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('epochs', default=1, help='Number of epochs to train')
     parser.add_argument('directory', help='Directory containing full dataset')
+    parser.add_argument(
+        '-e',
+        '--epochs',
+        type=int,
+        default=1,
+        help='Number of epochs to train')
     args = parser.parse_args()
 
     experiment = Experiment(args.directory, epochs=args.epochs)
