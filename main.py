@@ -7,6 +7,7 @@ network. For more information, see "Densely Connected Convolutional Networks"
 <https://arxiv.org/pdf/1608.06993.pdf>
 """
 import argparse
+import time
 
 import sklearn.metrics
 import numpy as np
@@ -20,16 +21,18 @@ from dataset import Dataset
 from model import DenseNet
 
 class Experiment(object):
-    def __init__(self, directory, epochs=1, cuda=False, save=False):
+    def __init__(self, directory, epochs=1, cuda=False, save=False, log_interval=30):
         self.dataset = Dataset(directory)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
+        self.log_interval = log_interval
         self.model = DenseNet()
         if cuda:
             self.model = self.model.cuda()
 
     def train(self):
+        print('Training %s epochs.' % self.epochs)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         loss_fun = nn.CrossEntropyLoss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -38,8 +41,10 @@ class Experiment(object):
             verbose=True,
             patience=3
         )
+        last_print = 0
         for epoch in range(self.epochs):
             self.model.train()
+            optimizer.zero_grad()
             for minibatch, targets in self.dataset.train:
                 minibatch = Variable(torch.stack(minibatch))
                 targets = Variable(torch.LongTensor(targets))
@@ -51,7 +56,10 @@ class Experiment(object):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-
+                if time.time() - last_print > self.log_interval:
+                    last_print = time.time()
+                    numer, denom = self.dataset.train.progress()
+                    print('Training - Epoch: %s, %s/%s' % (epoch, numer, denom))
             self.model.eval()
             for minibatch, targets in self.dataset.validate:
                 minibatch = Variable(torch.stack(minibatch), volatile=True)
@@ -61,6 +69,10 @@ class Experiment(object):
                     targets = targets.cuda()
                 out = self.model.forward(minibatch)
                 validation_loss = loss_fun(out, targets)
+                if time.time() - last_print > self.log_interval:
+                    last_print = time.time()
+                    numer, denom = self.dataset.validate.progress()
+                    print('Validating - Epoch: %s, %s/%s' % (epoch, numer, denom))
         if self.save:
             torch.save({
                 'model': self.model.state_dict(),

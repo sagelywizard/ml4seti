@@ -35,13 +35,17 @@ class Subset(object):
         self.directory = directory
         self.cache = cache
         self.minibatch_size = minibatch_size
-        size = len(dataset)
-        start = int(size * start)
-        end = int(size * end)
+        self.size = len(dataset)
+        self.start = int(self.size * start)
+        self.end = int(self.size * end)
         self.pool = multiprocessing.Pool(pool_size)
-        self.subset = dataset[start:end]
+        self.subset = dataset[self.start:self.end]
+        self.index = 0
 
         self.iter = iter(self.subset)
+
+    def progress(self):
+        return self.index, self.end-self.start
 
     def reload(self):
         self.iter = iter(self.subset)
@@ -60,6 +64,7 @@ class Subset(object):
         ret = self.pool.starmap(
             parse_dat,
             [(self.directory, self.cache, guid, target) for guid, target in guids])
+        self.index += len(ret)
         return zip(*ret)
 
 class Dataset(object):
