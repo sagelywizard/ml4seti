@@ -117,6 +117,16 @@ def main():
         help='Number of epochs to train')
     parser.add_argument('-c', '--cuda', action='store_true', default=False)
     parser.add_argument(
+        '--train',
+        action='store_true',
+        default=False,
+        help='flag to signal script should train the model')
+    parser.add_argument(
+        '--test',
+        action='store_true',
+        default=False,
+        help='flag to signal script should test the model')
+    parser.add_argument(
         '-s',
         '--save',
         action='store_true',
@@ -133,14 +143,18 @@ def main():
         default=None,
         help='path to a pretrained model')
     args = parser.parse_args()
-    experiment = Experiment(
-        args.directory,
-        epochs=args.epochs,
-        cuda=args.cuda,
-        save=args.save,
-        log_interval=args.log_interval,
-        load=args.model)
-    experiment.train()
+    if args.train or args.test:
+        experiment = Experiment(
+            args.directory,
+            epochs=args.epochs,
+            cuda=args.cuda,
+            save=args.save,
+            log_interval=args.log_interval,
+            load=args.model)
+        if args.train:
+            experiment.train()
+        if args.test:
+            experiment.test()
 
 if __name__ == '__main__':
     main()
