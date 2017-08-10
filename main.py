@@ -24,8 +24,8 @@ from util import tprint, stats
 
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
-            log_interval=30, load=None, split=(0.6, 0.2, 0.2)):
-        self.dataset = Dataset(directory, split=split)
+            log_interval=30, load=None, split=(0.6, 0.2, 0.2), cache=False):
+        self.dataset = Dataset(directory, split=split, cache=cache)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
@@ -174,6 +174,12 @@ def main():
         default=(0.6, 0.2, 0.2),
         type=valid_split,
         help='path to a pretrained model')
+    parser.add_argument(
+        '--cache',
+        default=False,
+        action='store_true',
+        help='flag to cache processed spectrograms')
+
     args = parser.parse_args()
     if args.train or args.test:
         experiment = Experiment(
@@ -183,7 +189,8 @@ def main():
             save=args.save,
             log_interval=args.log_interval,
             load=args.model,
-            split=args.split)
+            split=args.split,
+            cache=args.cache)
         if args.train:
             experiment.train()
         if args.test:
