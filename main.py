@@ -24,8 +24,10 @@ from util import tprint, stats
 
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
-            log_interval=30, load=None, split=(0.6, 0.2, 0.2), cache=False):
-        self.dataset = Dataset(directory, split=split, cache=cache)
+            log_interval=30, load=None, split=(0.6, 0.2, 0.2), cache=False,
+            minibatch_size=10):
+        self.dataset = Dataset(directory, split=split, cache=cache,
+            minibatch_size=minibatch_size)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
@@ -179,6 +181,12 @@ def main():
         default=False,
         action='store_true',
         help='flag to cache processed spectrograms')
+    parser.add_argument(
+        '-b',
+        '--minibatch-size',
+        type=int,
+        default=10,
+        help='size of each minibatch')
 
     args = parser.parse_args()
     if args.train or args.test:
