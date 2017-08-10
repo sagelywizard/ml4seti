@@ -101,7 +101,7 @@ class Dataset(object):
             pool_size=pool_size,
             cache=cache)
         self.test = Subset(
-            directory,
+            self.directory,
             dataset,
             train+valid,
             train+valid+test,
