@@ -4,17 +4,7 @@ import ibmseti
 import torch
 import torch.multiprocessing as multiprocessing
 
-LABELS = [
-    'brightpixel',
-    'narrowband',
-    'narrowbanddrd',
-    'noise',
-    'squarepulsednarrowband',
-    'squiggle',
-    'squigglesquarepulsednarrowband'
-]
-
-LABEL_TO_ID = {label: label_i for label_i, label in enumerate(LABELS)}
+from util import LABEL_TO_ID
 
 def parse_dat(directory, cache, guid, target):
     if os.path.isfile('%s%s.pth' % (directory, guid)):

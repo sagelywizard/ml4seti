@@ -16,12 +16,11 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torchvision
 import torch.optim.lr_scheduler
+import tabulate
 
 from dataset import Dataset
 from model import DenseNet
-
-def tprint(msg):
-    print('%s: %s' % (int(time.time()), msg))
+from util import tprint, stats
 
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
@@ -118,6 +117,7 @@ class Experiment(object):
                 tprint('Testing: %s/%s' % (numer, denom))
         tprint('Testing complete.')
         print(confusion_matrix)
+        print(tabulate.tabulate(stats(confusion_matrix)))
 
 def main():
     parser = argparse.ArgumentParser()
