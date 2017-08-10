@@ -37,7 +37,7 @@ def stats(conf_mat):
             recall = None
             precision = None
             f1_score = None
-        ret.append([LABEL_TO_ID[i], precision, recall, f1_score])
+        ret.append([LABELS[i], precision, recall, f1_score])
     ret.append([
         'avg',
         prec_acc/successful,
