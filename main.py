@@ -175,7 +175,7 @@ def main():
         '--split',
         default=(0.6, 0.2, 0.2),
         type=valid_split,
-        help='path to a pretrained model')
+        help='train/validation/test set split')
     parser.add_argument(
         '--cache',
         default=False,
