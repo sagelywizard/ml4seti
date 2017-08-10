@@ -24,8 +24,8 @@ from util import tprint, stats
 
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
-            log_interval=30, load=None):
-        self.dataset = Dataset(directory)
+            log_interval=30, load=None, split=(0.6, 0.2, 0.2)):
+        self.dataset = Dataset(directory, split=split)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
@@ -119,6 +119,19 @@ class Experiment(object):
         print(confusion_matrix)
         print(tabulate.tabulate(stats(confusion_matrix)))
 
+def valid_split(arg):
+    split = arg.split(',')
+    if len(split) != 3:
+        raise argparse.ArgumentTypeError("invalid split argument")
+    try:
+        train = float(split[0])
+        valid = float(split[1])
+        test = float(split[2])
+    except ValueError:
+        raise argparse.ArgumentTypeError("split args must be numbers")
+    denom = train + valid + test
+    return train/denom, valid/denom, test/denom
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', help='Directory containing full dataset')
@@ -155,6 +168,12 @@ def main():
         '--model',
         default=None,
         help='path to a pretrained model')
+    parser.add_argument(
+        '-p',
+        '--split',
+        default=(0.6, 0.2, 0.2),
+        type=valid_split,
+        help='path to a pretrained model')
     args = parser.parse_args()
     if args.train or args.test:
         experiment = Experiment(
@@ -163,7 +182,8 @@ def main():
             cuda=args.cuda,
             save=args.save,
             log_interval=args.log_interval,
-            load=args.model)
+            load=args.model,
+            split=args.split)
         if args.train:
             experiment.train()
         if args.test:
