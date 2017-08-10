@@ -106,7 +106,7 @@ class Experiment(object):
             out = self.model.forward(minibatch)
             _, predicted = torch.max(out.data, 1)
             predicted = predicted.cpu().numpy()
-            targets = targets.cpu().numpy()
+            targets = targets.data.cpu().numpy()
             confusion_matrix += sklearn.metrics.confusion_matrix(
                 predicted,
                 targets,
