@@ -1,0 +1,5 @@
+sklearn>=0.18.2
+numpy>=1.13.1
+torch>=0.2.0
+torchvision>=0.1.8
+tabulate>=0.7.7
