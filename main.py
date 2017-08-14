@@ -25,14 +25,14 @@ from util import tprint, stats
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
             log_interval=30, load=None, split=(0.6, 0.2, 0.2), cache=False,
-            minibatch_size=10):
+            minibatch_size=10, pretrained=False):
         self.dataset = Dataset(directory, split=split, cache=cache,
             minibatch_size=minibatch_size)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
         self.log_interval = log_interval
-        self.model = DenseNet()
+        self.model = DenseNet(pretrained)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         if load is not None:
             state = torch.load(load)
@@ -187,6 +187,11 @@ def main():
         type=int,
         default=10,
         help='size of each minibatch')
+    parser.add_argument(
+        '--pretrained',
+        default=False,
+        action='store_true',
+        help='use DenseNet pretrained on ImageNet')
 
     args = parser.parse_args()
     if args.train or args.test:
@@ -198,7 +203,9 @@ def main():
             log_interval=args.log_interval,
             load=args.model,
             split=args.split,
-            cache=args.cache)
+            cache=args.cache,
+            minibatch_size=args.minibatch_size,
+            pretrained=args.pretrained)
         if args.train:
             experiment.train()
         if args.test:
