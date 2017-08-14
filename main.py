@@ -14,7 +14,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import torchvision
 import torch.optim.lr_scheduler
 import tabulate
 
