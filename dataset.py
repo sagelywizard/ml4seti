@@ -64,13 +64,13 @@ class Dataset(object):
     When iterated over, this object returns (minibatch, minibatch target) pairs.
     """
     def __init__(self, directory, split=(0.6, 0.2, 0.2), minibatch_size=10,
-            pool_size=8, cache=False):
+            pool_size=8, cache=False, index_file):
         if not directory.endswith('/'):
             self.directory = '%s/' % directory
         else:
             self.directory = directory
-        path = '%spublic_list_primary_v3_full_21june_2017.csv' % self.directory
-        lines = open(path, 'r').readlines()[1:]
+
+        lines = open(index_file, 'r').readlines()[1:]
         dataset = [tuple(line.strip().split(',', 1)) for line in lines]
 
         train, valid, test = split

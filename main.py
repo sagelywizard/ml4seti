@@ -24,9 +24,9 @@ from util import tprint, stats
 class Experiment(object):
     def __init__(self, directory, epochs=1, cuda=False, save=False,
             log_interval=30, load=None, split=(0.6, 0.2, 0.2), cache=False,
-            minibatch_size=10, pretrained=False):
+            minibatch_size=10, pretrained=False, index_file=''):
         self.dataset = Dataset(directory, split=split, cache=cache,
-            minibatch_size=minibatch_size)
+            minibatch_size=minibatch_size, index_file=index_file)
         self.epochs = epochs
         self.cuda = cuda
         self.save = save
@@ -39,6 +39,7 @@ class Experiment(object):
             self.optimizer.load_state_dict(state['optim'])
         if cuda:
             self.model = self.model.cuda()
+
 
     def train(self):
         print('Training %s epochs.' % self.epochs)
@@ -191,6 +192,12 @@ def main():
         default=False,
         action='store_true',
         help='use DenseNet pretrained on ImageNet')
+    parser.add_argument(
+        '-i',
+        '--index-file',
+        type=str,
+        default='public_list_primary_v3_full_21june_2017.csv',
+        help='The index file for the data set, containing the UUID, class pairs.')
 
     args = parser.parse_args()
     if args.train or args.test:
@@ -204,7 +211,8 @@ def main():
             split=args.split,
             cache=args.cache,
             minibatch_size=args.minibatch_size,
-            pretrained=args.pretrained)
+            pretrained=args.pretrained,
+            index_file=args.index_file)
         if args.train:
             experiment.train()
         if args.test:
