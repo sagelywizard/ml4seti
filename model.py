@@ -1,24 +1,20 @@
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision
+from collections import OrderedDict
 
 class DenseNet(nn.Module):
     def __init__(self, pretrained):
         super(DenseNet, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(1, 3, kernel_size=1, stride=1),
-            nn.BatchNorm2d(3),
-            nn.ReLU(inplace=True)
-        )
-        self.densenet = torchvision.models.densenet201(
+        self.densenet = list(torchvision.models.densenet201(
             pretrained=pretrained
-        ).features
-        self.out = nn.Sequential(
-            nn.ReLU(inplace=True),
-            nn.AvgPool2d(kernel_size=7)
-        )
+        ).features.named_children())
+        self.densenet[0] = ('conv0', nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False))
+        self.densenet = nn.Sequential(OrderedDict(self.densenet))
         self.linear = nn.Linear(3840, 7)
 
     def forward(self, minibatch):
-        dense = self.densenet(self.conv(minibatch))
-        out = self.out(dense)
-        return self.linear(out.view(dense.size(0), -1))
+        dense = self.densenet(minibatch)
+        out = F.relu(dense, inplace=True)
+        out = F.avg_pool2d(out, kernel_size=7).view(dense.size(0), -1)
+        return self.linear(out)
