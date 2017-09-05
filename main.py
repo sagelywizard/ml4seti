@@ -34,7 +34,11 @@ class Experiment(object):
         self.model = DenseNet(pretrained)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         if load is not None:
-            state = torch.load(load)
+            if cuda:
+                state = torch.load(load)
+            else:
+                state = torch.load(load, map_location=lambda storage, loc: storage)
+                
             self.model.load_state_dict(state['model'])
             self.optimizer.load_state_dict(state['optim'])
         if cuda:
@@ -200,6 +204,7 @@ def main():
         help='The index file for the data set, containing the UUID, class pairs.')
 
     args = parser.parse_args()
+    
     if args.train or args.test:
         experiment = Experiment(
             args.directory,
